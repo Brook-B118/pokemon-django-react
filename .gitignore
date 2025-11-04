@@ -1,0 +1,28 @@
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Database
+db.sqlite3
+
+# Media and Static files (if not tracked)
+media/
+static_root/
+
+# Local settings and environment variables
+local_settings.py
+.env
+
+# IDE/Editor files
+.vscode/
+.idea/
+
+# Logs
+*.log
