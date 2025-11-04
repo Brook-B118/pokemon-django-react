@@ -1,11 +1,14 @@
 services:
   web:
     build: .
+    user: "${UID:-1000}:${GID:-1000}"
     ports:
       - "8000:8000"
     volumes:
       - .:/app
       - db_data:/app/db.sqlite3
+    env_file:
+      - .env
     stdin_open: true
     tty: true
     command: bash
