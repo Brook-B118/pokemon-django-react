@@ -3,7 +3,7 @@ services:
     build: .
     # user: "${UID:-1000}:${GID:-1000}"
     ports:
-      - "8000:8000"
+      - "5000:9000"
     volumes:
       - .:/app
       - db_data:/app/pokemon-project/data/
