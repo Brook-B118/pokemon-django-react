@@ -1,30 +1,32 @@
 from rest_framework.response import Response
-from .services import GoogleOidc, InvalidGoogleIdToken
-
+from .services import GoogleOIDC, InvalidGoogleIdToken
+from .selectors import get_user_by_oidc_sub
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework import serializers
 
 class GoogleRegisterApi(APIView):
-    permission_classes = [AllowAny]
-    # TODO: Add an input serializer class? Note: This should go in the 
+    permission_classes = [AllowAny] 
     class InputSerializer(serializers.Serializer):
         credential = serializers.CharField() # Haven't actually made the model yet, this was just for testing purposes.
  
     def post(self, request):
-        input = self.InputSerializer(data=request.data)
-        input.is_valid(raise_exception=True)
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        token = input.validated_data["credential"]
+        token = serializer.validated_data["credential"]
         
-        # data = request.data
-        # token = data.get("credential")
-        # if not token:
-        #     return Response({"detail": "Missing credential"}, status=400)
         try:
             # Class for handling the business logic of verifying the token?
-            userId = GoogleOidc.verify_token(token=token)
+            userInfo = GoogleOIDC.verify_token(token=token)
             # TODO: If verified token and user's sub doesn't exist in db yet, maybe call GoogleOidc register method?
+            sub = userInfo['sub']
+            user = get_user_by_oidc_sub(sub, "google")
+            if user: # check if user exists in db already.
+                pass # generate token?, user already has an account
+            else:
+                pass # register user to model then generate token
+                GoogleOIDC.register_new_user(userInfo, "google")
             return Response("valid ID token", status=200)
         except InvalidGoogleIdToken as e: # I think the class method could return the ValueError right?
             return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)

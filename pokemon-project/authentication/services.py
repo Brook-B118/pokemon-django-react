@@ -1,14 +1,17 @@
 from config.env import env
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from .models import OIDCIdentity
+from django.contrib.auth import get_user_model
+from django.db import transaction
 
 WEB_CLIENT_ID = env('WEB_CLIENT_ID')
 
 class InvalidGoogleIdToken(Exception):
     pass
 
-class GoogleOidc:
-
+class GoogleOIDC:
+    @staticmethod
     def verify_token(token):
         # print(token)
         try:
@@ -31,13 +34,33 @@ class GoogleOidc:
             # This ID is unique to each Google Account, making it suitable for use as a primary key
             # during account lookup. Email is not a good choice because it can be changed by the user.
 
-            userId = idinfo['sub']
-            return userId
+            # userId = idinfo['sub']
+            userInfo = idinfo
+            return userInfo
         
         except ValueError as e:
             # return dict({"detail": "Invalid ID token", "error": str(e)}, status=400)
             raise InvalidGoogleIdToken(str(e)) from e
         
-        # TODO: Create selector file for looking up if the user's sub already exists?
+        # Created selector file for looking up if the user's sub already exists.
+
         # TODO: Should I keep a register method in here that gets called when token is verified?
-        #
+
+    @staticmethod
+    @transaction.atomic
+    def register_new_user(userInfo, provider):
+        User = get_user_model()
+        # for user we can name, i don't think we can do email.
+        user = User.objects.create(
+            username=userInfo['name'], # change this to be something else, eventually users can edit this.
+            email=userInfo['email'], # Include email in scope when requesting openId token from google.
+        )
+        user.set_unusable_password()
+        user.save()
+        # for OIDCIdentity we can give the provider and sub.
+        identity = OIDCIdentity.objects.create(
+            user=user,
+            provider=provider,
+            sub=userInfo['sub']
+            )
+        pass
