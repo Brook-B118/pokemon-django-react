@@ -1,9 +1,27 @@
 from rest_framework.response import Response
-from .services import GoogleOIDC, InvalidGoogleIdToken
+from .services import GoogleOIDC, InvalidGoogleIdToken, mint_http_tokens
 from .selectors import get_user_by_oidc_sub
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework_simplejwt.tokens import RefreshToken
+
+def set_minted_cookie(refresh_and_access, return_status):
+    response = Response(
+            {"access": str(refresh_and_access.access_token)},
+            status=return_status,
+        )
+    
+    response.set_cookie(
+            key="refresh_token",
+            value=str(refresh_and_access),
+            httponly=True,
+            secure=False,      # True in prod (HTTPS). In local dev you may need False.
+            samesite="Lax",   # Often OK for same-site SPA. "None" requires secure=True.
+            path="/api/token/refresh/",  # optional but nice
+        )
+    
+    return response
 
 class GoogleRegisterApi(APIView):
     permission_classes = [AllowAny] 
@@ -20,13 +38,22 @@ class GoogleRegisterApi(APIView):
             # Class for handling the business logic of verifying the token?
             userInfo = GoogleOIDC.verify_token(token=token)
             # TODO: If verified token and user's sub doesn't exist in db yet, maybe call GoogleOidc register method?
+
             sub = userInfo['sub']
             user = get_user_by_oidc_sub(sub, "google")
             if user: # check if user exists in db already.
-                pass # generate token?, user already has an account
+                # My idea:
+                tokens = mint_http_tokens(user)
+                response = set_minted_cookie(tokens, status.HTTP_200_OK)
+
+                return response
+
             else:
-                pass # register user to model then generate token
-                GoogleOIDC.register_new_user(userInfo, "google")
-            return Response("valid ID token", status=200)
+                # register user to model then generate token
+                identity = GoogleOIDC.register_new_user(userInfo, "google")
+                tokens = mint_http_tokens(identity.user)
+                response = set_minted_cookie(tokens, status.HTTP_201_CREATED)
+
+                return response
         except InvalidGoogleIdToken as e: # I think the class method could return the ValueError right?
             return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)

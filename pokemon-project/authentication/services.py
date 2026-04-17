@@ -4,8 +4,16 @@ from google.auth.transport import requests
 from .models import OIDCIdentity
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
 WEB_CLIENT_ID = env('WEB_CLIENT_ID')
+
+def mint_http_tokens(user):
+    refresh_and_access = RefreshToken.for_user(user)
+    return refresh_and_access
+
 
 class InvalidGoogleIdToken(Exception):
     pass
@@ -44,8 +52,6 @@ class GoogleOIDC:
         
         # Created selector file for looking up if the user's sub already exists.
 
-        # TODO: Should I keep a register method in here that gets called when token is verified?
-
     @staticmethod
     @transaction.atomic
     def register_new_user(userInfo, provider):
@@ -63,4 +69,4 @@ class GoogleOIDC:
             provider=provider,
             sub=userInfo['sub']
             )
-        pass
+        return identity
