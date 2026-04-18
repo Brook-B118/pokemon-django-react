@@ -6,15 +6,15 @@ from rest_framework.views import APIView
 from rest_framework import serializers, status
 from rest_framework_simplejwt.tokens import RefreshToken
 
-def set_minted_cookie(refresh_and_access, return_status):
+def set_minted_cookie(refresh_token_object, return_status):
     response = Response(
-            {"access": str(refresh_and_access.access_token)},
+            {"access": str(refresh_token_object.access_token)},
             status=return_status,
         )
     
     response.set_cookie(
             key="refresh_token",
-            value=str(refresh_and_access),
+            value=str(refresh_token_object),
             httponly=True,
             secure=False,      # True in prod (HTTPS). In local dev you may need False.
             samesite="Lax",   # Often OK for same-site SPA. "None" requires secure=True.
@@ -43,16 +43,16 @@ class GoogleRegisterApi(APIView):
             user = get_user_by_oidc_sub(sub, "google")
             if user: # check if user exists in db already.
                 # My idea:
-                tokens = mint_http_tokens(user)
-                response = set_minted_cookie(tokens, status.HTTP_200_OK)
+                refresh_token_object = mint_http_tokens(user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_200_OK)
 
                 return response
 
             else:
                 # register user to model then generate token
                 identity = GoogleOIDC.register_new_user(userInfo, "google")
-                tokens = mint_http_tokens(identity.user)
-                response = set_minted_cookie(tokens, status.HTTP_201_CREATED)
+                refresh_token_object = mint_http_tokens(identity.user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_201_CREATED)
 
                 return response
         except InvalidGoogleIdToken as e: # I think the class method could return the ValueError right?

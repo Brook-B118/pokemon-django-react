@@ -11,8 +11,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 WEB_CLIENT_ID = env('WEB_CLIENT_ID')
 
 def mint_http_tokens(user):
-    refresh_and_access = RefreshToken.for_user(user)
-    return refresh_and_access
+    refresh_token_object = RefreshToken.for_user(user)
+    # RefreshToken.for_user() returns a refresh token object. It has an access token method for getting it's associated access token. We use its __str__ representation to get the refresh token.
+    return refresh_token_object
 
 
 class InvalidGoogleIdToken(Exception):
