@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework import serializers, status
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt import exceptions
 
 def set_minted_cookie(refresh_token_object, return_status):
     response = Response(
@@ -18,10 +19,33 @@ def set_minted_cookie(refresh_token_object, return_status):
             httponly=True,
             secure=False,      # True in prod (HTTPS). In local dev you may need False.
             samesite="Lax",   # Often OK for same-site SPA. "None" requires secure=True.
-            path="/api/token/refresh/",  # optional but nice
+            path="/authentication/token/refresh/",  # optional but nice
         )
     
     return response
+
+class TokenRefresh(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+         
+        refresh_str = request.COOKIES.get("refresh_token")
+        if refresh_str:
+            try:
+                reconstructed_refresh_object = RefreshToken(refresh_str)
+
+                # for now, just return new access token. Later, handle refresh token rotation.
+                response = Response(
+                    {"access": str(reconstructed_refresh_object.access_token)},
+                    status=status.HTTP_200_OK,
+                )
+
+                return response
+
+            except exceptions.TokenError as e:
+                return Response({"detail": "Invalid Refresh token", "error": str(e)}, status=401)
+        else:
+            return Response({"detail": "Missing Refresh token"}, status=401)
 
 class GoogleRegisterApi(APIView):
     permission_classes = [AllowAny] 
