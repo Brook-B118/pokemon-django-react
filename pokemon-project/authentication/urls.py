@@ -9,5 +9,6 @@ urlpatterns = [
     # path("xyz", views.xyz, name="example_path") # localhost:8000/authentication/xyz
     # Note: views.xyz works here because our views file has a route called 'xyz'
     path('register/', views.GoogleRegisterApi.as_view(), name="register_openid_user"),
+    path('login/', views.GoogleLoginApi.as_view(), name="login_openid_user"),
     path('token/refresh/', views.TokenRefresh.as_view(), name="use_refresh_token_for_new_access_token")
 ]

@@ -14,6 +14,8 @@ from ..selectors import get_user_by_oidc_sub
 # Does mint_http_tokens actually return valid tokens?
 
 class GoogleRegistrationIntegrationTests(TestCase):
+    google_registration_route = "/authentication/register/"
+
 
     def setUp(self):
         # this runs before every test method
@@ -41,7 +43,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
             'sub': '123456789'
         }
 
-        response = self.client.post("/authentication/register/", {"credential": "fake_token"}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         token = AccessToken(response.json()["access"])
 
@@ -65,7 +67,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
             'sub': '987654321'
         }
 
-        response = self.client.post("/authentication/register/", {"credential": "fake_token"}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         User = get_user_model()
         new_user = User.objects.get(username='test_new_user')
@@ -98,3 +100,61 @@ class GoogleRegistrationIntegrationTests(TestCase):
     def test_get_user_by_oidc_sub_with_user_that_does_not_exist_yet(self):
         result = get_user_by_oidc_sub("0101010110", "google")
         assert result == None
+
+
+class GoogleLoginIntegrationTests(TestCase):
+    google_login_route = "/authentication/login/"
+
+    def setUp(self):
+        # this runs before every test method
+        User = get_user_model()
+        self.user = User.objects.create(
+            username='test_user',
+            email='test@example.com',
+        )
+        self.user.set_unusable_password()
+        self.user.save()
+
+        OIDCIdentity.objects.create(
+            user=self.user,
+            provider='google',
+            sub='123456789',
+        )
+
+    @patch('authentication.services.GoogleOIDC.verify_token')
+    def test_login_an_existing_user(self, mock_verify_token):
+        mock_verify_token.return_value = {
+            'name':'test_user',
+            'email':'test@example.com',
+            'sub': '123456789'
+        }
+
+        response = self.client.post(self.google_login_route, {"credential": "fake_token"}, content_type="application/json")
+
+        token = AccessToken(response.json()["access"])
+
+        # verify that access token is in the response
+        assert 'access' in response.json()
+        assert response.status_code == 200
+        # verify the access token contains the correct user id when decoded
+        assert token["user_id"] == str(self.user.id)
+        # verify the response has a "refresh_token" key
+        assert 'refresh_token' in response.cookies
+        cookie = response.cookies['refresh_token']
+        assert cookie['httponly'] == True
+        assert cookie['samesite'] == 'Lax'
+        assert cookie['path'] == "/authentication/token/refresh/"
+
+    
+    @patch('authentication.services.GoogleOIDC.verify_token')
+    def test_login_an_unregistered_user(self, mock_verify_token):
+        mock_verify_token.return_value = {
+            'name':'test_unregistered_user',
+            'email':'unregisteredtest@example.com',
+            'sub': '432512201'
+        }
+
+        response = self.client.post(self.google_login_route, {"credential": "fake_token"}, content_type="application/json")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Unauthorized user, need to register."

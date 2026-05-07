@@ -13,10 +13,11 @@ from ..services import InvalidGoogleIdToken
 # Is mint_http_tokens called when the user already exists but registers and when a new user is registered?
 
 class GoogleRegistrationTests(TestCase):
+    google_registration_route = "/authentication/register/"
 
 
     def test_missing_credential_key(self):
-        response = self.client.post("/authentication/register/", {'': ''}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {'': ''}, content_type="application/json")
 
         assert response.status_code == 400
         assert response.json()['credential'] == ['This field is required.']
@@ -33,7 +34,7 @@ class GoogleRegistrationTests(TestCase):
         }
         mock_get_user.return_value = None  # user doesn't exist yet
 
-        response = self.client.post("/authentication/register/", {"credential": "fake_token"}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         # verify_token should be called with the credential from the payload
         mock_verify_token.assert_called_once_with(token="fake_token")
@@ -68,7 +69,7 @@ class GoogleRegistrationTests(TestCase):
         # mock_get_user.return_value = True  # user already exists
         # mock_get_user automatically returns a MagicMock object, safer to leave as this incase attributes are accessed on user.
 
-        response = self.client.post("/authentication/register/", {"credential": "fake_token"}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         # verify_token should be called with the credential from the payload
         mock_verify_token.assert_called_once_with(token="fake_token")
@@ -97,7 +98,7 @@ class GoogleRegistrationTests(TestCase):
         
         mock_verify_token.side_effect = InvalidGoogleIdToken("bad token")
 
-        response = self.client.post("/authentication/register/", {"credential": "fake_token"}, content_type="application/json")
+        response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         # verify response status code is 400 for client error response 
         assert response.status_code == 400
@@ -110,4 +111,71 @@ class GoogleRegistrationTests(TestCase):
         
         mock_register.assert_not_called()
 
+        mock_mint.assert_not_called()
+
+
+class GoogleLoginTests(TestCase):
+    google_login_route = "/authentication/login/"
+
+    def test_missing_credential_key(self):
+        response = self.client.post(self.google_login_route, {'': ''}, content_type="application/json")
+
+        assert response.status_code == 400
+        assert response.json()['credential'] == ['This field is required.']
+
+    
+    @patch('authentication.views.mint_http_tokens')
+    @patch('authentication.views.get_user_by_oidc_sub')
+    @patch('authentication.services.GoogleOIDC.verify_token')
+    def test_logging_in_existing_user(self, mock_verify_token, mock_get_user, mock_mint):
+        mock_verify_token.return_value = {
+            'sub': '123456789',
+            'name': 'Test User',
+            'email': 'test@example.com',
+        }
+
+        response = self.client.post(self.google_login_route, {"credential": "fake_token"}, content_type="application/json")
+
+        mock_verify_token.assert_called_once_with(token="fake_token")
+
+        mock_get_user.assert_called_once_with("123456789", "google")
+
+        mock_mint.assert_called_once()
+
+        assert response.status_code == 200
+
+        assert "access" in response.json()
+
+
+    @patch('authentication.views.mint_http_tokens')
+    @patch('authentication.views.get_user_by_oidc_sub')
+    @patch('authentication.services.GoogleOIDC.verify_token')
+    def test_logging_in_unregistered_user(self, mock_verify_token, mock_get_user, mock_mint):
+        mock_verify_token.return_value = {
+            'sub': '123456789',
+            'name': 'Test User',
+            'email': 'test@example.com',
+        }
+
+        mock_get_user.return_value = None
+
+        response = self.client.post(self.google_login_route, {"credential": "fake_token"}, content_type="application/json")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Unauthorized user, need to register."
+
+        mock_mint.assert_not_called()
+
+
+    @patch('authentication.views.mint_http_tokens')
+    @patch('authentication.views.get_user_by_oidc_sub')
+    @patch('authentication.services.GoogleOIDC.verify_token')
+    def test_invalid_google_id_token_raised(self, mock_verify_token, mock_get_user, mock_mint):
+        mock_verify_token.side_effect = InvalidGoogleIdToken("bad token")
+
+        response = self.client.post(self.google_login_route, {"credential": "fake_token"}, content_type="application/json")
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Invalid ID token"
+        mock_get_user.assert_not_called()
         mock_mint.assert_not_called()
