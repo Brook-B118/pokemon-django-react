@@ -2,6 +2,7 @@ from django.test import TestCase
 from unittest.mock import patch
 from rest_framework.response import Response
 from ..services import InvalidGoogleIdToken
+from rest_framework_simplejwt import exceptions
 
 # Create your tests here.
 
@@ -179,3 +180,37 @@ class GoogleLoginTests(TestCase):
         assert response.json()["detail"] == "Invalid ID token"
         mock_get_user.assert_not_called()
         mock_mint.assert_not_called()
+
+
+class RefreshTokenTests(TestCase):
+    refresh_token_route = "/authentication/token/refresh/"
+    # Missing refresh_str? 401 response
+    # Valid refresh token object? 200 response with access token
+    # Invalid refresh token? TokenError exception with 401 response
+    def test_missing_refresh_token_from_http_cookie(self):
+        
+        response = self.client.post(self.refresh_token_route)
+        
+        assert response.json()["detail"] == "Missing Refresh token"
+        assert response.status_code == 401
+    
+
+    @patch('authentication.views.RefreshToken')
+    def test_valid_refresh_token(self, mock_refresh_token):
+
+        self.client.cookies["refresh_token"] = "fake_refresh_token"
+        response = self.client.post(self.refresh_token_route)
+
+        assert response.status_code == 200
+        assert "access" in response.json()
+
+    @patch('authentication.views.RefreshToken')
+    def test_invalid_refresh_token(self, mock_refresh_token):
+
+        mock_refresh_token.side_effect = exceptions.TokenError
+
+        self.client.cookies["refresh_token"] = "invalid_refresh_token"
+        response = self.client.post(self.refresh_token_route)
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid Refresh token"
