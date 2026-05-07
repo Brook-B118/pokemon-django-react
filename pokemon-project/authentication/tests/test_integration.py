@@ -6,6 +6,8 @@ from ..services import GoogleOIDC, InvalidGoogleIdToken
 from django.contrib.auth import get_user_model
 from ..models import OIDCIdentity 
 from ..selectors import get_user_by_oidc_sub
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt import exceptions
 
 # If a user actually exists in our database, does my view return a 200 response?
 # If a user doesn’t exist in the database when registering, does my view create a user in the database correctly and return a 201 response?
@@ -158,3 +160,40 @@ class GoogleLoginIntegrationTests(TestCase):
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Unauthorized user, need to register."
+
+class RefreshTokenIntegrationTests(TestCase):
+    refresh_token_route = "/authentication/token/refresh/"
+
+    def setUp(self):
+        # this runs before every test method
+        User = get_user_model()
+        self.user = User.objects.create(
+            username='test_user',
+            email='test@example.com',
+        )
+        self.user.set_unusable_password()
+        self.user.save()
+
+        OIDCIdentity.objects.create(
+            user=self.user,
+            provider='google',
+            sub='123456789',
+        )
+
+        self.refresh_token_str = str(RefreshToken.for_user(self.user))
+
+    def test_valid_refresh_token(self):
+        self.client.cookies["refresh_token"] = self.refresh_token_str
+        response = self.client.post(self.refresh_token_route)
+
+        token = AccessToken(response.json()["access"])
+        assert 'access' in response.json()
+        # verify the access token contains the correct user id when decoded
+        assert token["user_id"] == str(self.user.id)
+    
+    def test_invalid_refresh_token(self):
+        self.client.cookies["refresh_token"] = "invalid_refresh_token"
+        response = self.client.post(self.refresh_token_route)
+
+        assert response.json()["detail"] == "Invalid Refresh token"
+        assert response.status_code == 401
