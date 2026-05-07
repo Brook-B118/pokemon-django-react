@@ -61,12 +61,10 @@ class GoogleRegisterApi(APIView):
         try:
             # Class for handling the business logic of verifying the token?
             userInfo = GoogleOIDC.verify_token(token=token)
-            # TODO: If verified token and user's sub doesn't exist in db yet, maybe call GoogleOidc register method?
-
             sub = userInfo['sub']
             user = get_user_by_oidc_sub(sub, "google")
+
             if user: # check if user exists in db already.
-                # My idea:
                 refresh_token_object = mint_http_tokens(user)
                 response = set_minted_cookie(refresh_token_object, status.HTTP_200_OK)
 
@@ -79,11 +77,37 @@ class GoogleRegisterApi(APIView):
                 response = set_minted_cookie(refresh_token_object, status.HTTP_201_CREATED)
 
                 return response
-        except InvalidGoogleIdToken as e: # I think the class method could return the ValueError right?
+        except InvalidGoogleIdToken as e:
             return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)
         
 class GoogleLoginApi(APIView):
+    permission_classes = [AllowAny]
+    class InputSerializer(serializers.Serializer):
+        credential = serializers.CharField()
+
     def post(self, request):
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        token = serializer.validated_data["credential"]
+
+        try:
+            userInfo = GoogleOIDC.verify_token(token=token)
+            sub = userInfo['sub']
+            user = get_user_by_oidc_sub(sub, "google")
+
+            if user: # check if user exists in db 
+                refresh_token_object = mint_http_tokens(user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_200_OK)
+
+                return response
+
+            else: # if None returned instead of user
+                return Response({"detail": "Unauthorized user, need to register."}, status=404)
+                # could maybe do a redirect to register route but I think its better to return 404 code and inform the user their account wasn't found in our database.
+
+        except InvalidGoogleIdToken as e: 
+            return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)
+            
+
         
-        class InputSerializer(serializers.Serializer):
-            credential = serializers.CharField()    
