@@ -81,3 +81,9 @@ class GoogleRegisterApi(APIView):
                 return response
         except InvalidGoogleIdToken as e: # I think the class method could return the ValueError right?
             return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)
+        
+class GoogleLoginApi(APIView):
+    def post(self, request):
+        
+        class InputSerializer(serializers.Serializer):
+            credential = serializers.CharField()    
