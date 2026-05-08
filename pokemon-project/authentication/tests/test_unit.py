@@ -195,14 +195,17 @@ class RefreshTokenTests(TestCase):
         assert response.status_code == 401
     
 
+    @patch('authentication.views.mint_http_tokens')
+    @patch('authentication.views.get_user_model')
     @patch('authentication.views.RefreshToken')
-    def test_valid_refresh_token(self, mock_refresh_token):
+    def test_valid_refresh_token(self, mock_refresh_token, mock_get_user_object, mock_mint):
 
         self.client.cookies["refresh_token"] = "fake_refresh_token"
         response = self.client.post(self.refresh_token_route)
 
         assert response.status_code == 200
         assert "access" in response.json()
+        mock_refresh_token.return_value.blacklist.assert_called_once()
 
     @patch('authentication.views.RefreshToken')
     def test_invalid_refresh_token(self, mock_refresh_token):

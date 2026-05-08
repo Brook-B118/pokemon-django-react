@@ -164,6 +164,7 @@ class GoogleLoginIntegrationTests(TestCase):
 class RefreshTokenIntegrationTests(TestCase):
     refresh_token_route = "/authentication/token/refresh/"
 
+
     def setUp(self):
         # this runs before every test method
         User = get_user_model()
@@ -182,6 +183,7 @@ class RefreshTokenIntegrationTests(TestCase):
 
         self.refresh_token_str = str(RefreshToken.for_user(self.user))
 
+
     def test_valid_refresh_token(self):
         self.client.cookies["refresh_token"] = self.refresh_token_str
         response = self.client.post(self.refresh_token_route)
@@ -191,9 +193,34 @@ class RefreshTokenIntegrationTests(TestCase):
         # verify the access token contains the correct user id when decoded
         assert token["user_id"] == str(self.user.id)
     
+
     def test_invalid_refresh_token(self):
         self.client.cookies["refresh_token"] = "invalid_refresh_token"
         response = self.client.post(self.refresh_token_route)
 
         assert response.json()["detail"] == "Invalid Refresh token"
         assert response.status_code == 401
+
+
+    def test_refresh_token_rotation(self):
+        self.client.cookies["refresh_token"] = self.refresh_token_str
+        response = self.client.post(self.refresh_token_route)
+
+        token = RefreshToken(response.cookies["refresh_token"].value)
+        # response.cookies["refresh_token"] returns a Morsel object, not a string.
+        # Use .value to get the actual token string.
+        # https://docs.google.com/document/d/1lKPvJKPvJ0SAWEg_0-eFfRVcfEAdImg0Jo-1EkDkBuU/edit?tab=t.3do78bun4phg I have notes here covering this.
+
+        assert str(token) != self.refresh_token_str
+
+    def test_old_refresh_token_invalid_after_rotation(self):
+        self.client.cookies["refresh_token"] = self.refresh_token_str
+        # first use: should work and rotate
+        self.client.post(self.refresh_token_route)
+
+        # try using the same token again
+        self.client.cookies["refresh_token"] = self.refresh_token_str
+        response = self.client.post(self.refresh_token_route)
+
+        assert response.status_code == 401
+        assert response.json()["detail"] == "Invalid Refresh token"

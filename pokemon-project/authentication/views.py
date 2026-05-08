@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from .services import GoogleOIDC, InvalidGoogleIdToken, mint_http_tokens
 from .selectors import get_user_by_oidc_sub
+from django.contrib.auth import get_user_model
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework import serializers, status
@@ -34,11 +35,15 @@ class TokenRefresh(APIView):
             try:
                 reconstructed_refresh_object = RefreshToken(refresh_str)
 
-                # for now, just return new access token. Later, handle refresh token rotation.
-                response = Response(
-                    {"access": str(reconstructed_refresh_object.access_token)},
-                    status=status.HTTP_200_OK,
-                )
+                # Find user via token's user id
+                User = get_user_model()
+                user_id = reconstructed_refresh_object["user_id"]
+                user = User.objects.get(pk=user_id)
+                reconstructed_refresh_object.blacklist()
+
+                new_refresh_token_object = mint_http_tokens(user)
+                
+                response = set_minted_cookie(new_refresh_token_object, status.HTTP_200_OK)
 
                 return response
 
