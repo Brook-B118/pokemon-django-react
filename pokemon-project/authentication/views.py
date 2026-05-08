@@ -1,42 +1,118 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from rest_framework.response import Response
+from .services import GoogleOIDC, InvalidGoogleIdToken, mint_http_tokens
+from .selectors import get_user_by_oidc_sub
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+from rest_framework import serializers, status
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt import exceptions
 
-# Create your views here.
+def set_minted_cookie(refresh_token_object, return_status):
+    response = Response(
+            {"access": str(refresh_token_object.access_token)},
+            status=return_status,
+        )
+    
+    response.set_cookie(
+            key="refresh_token",
+            value=str(refresh_token_object),
+            httponly=True,
+            secure=False,      # True in prod (HTTPS). In local dev you may need False.
+            samesite="Lax",   # Often OK for same-site SPA. "None" requires secure=True.
+            path="/authentication/token/refresh/",  # optional but nice
+        )
+    
+    return response
 
-# Had to include this so the dev server actually runs, but its commented out to prove a point in urls.py
-# def index(request):
-#     return HttpResponse("test")
+class TokenRefresh(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+         
+        refresh_str = request.COOKIES.get("refresh_token")
+        if refresh_str:
+            try:
+                reconstructed_refresh_object = RefreshToken(refresh_str)
 
-# def xyz(request):
-#     # processing - database, cache, rendering HTML template
-#     return HttpResponse("This is an example of a view")
+                # Find user via token's user id
+                User = get_user_model()
+                user_id = reconstructed_refresh_object["user_id"]
+                user = User.objects.get(pk=user_id)
+                reconstructed_refresh_object.blacklist()
 
-def register(request):
-    # Simple steps involved in registering using JWT:
+                new_refresh_token_object = mint_http_tokens(user)
+                
+                response = set_minted_cookie(new_refresh_token_object, status.HTTP_200_OK)
 
-    # 1. User provides a username 
+                return response
 
-    # 2. User provides a password
+            except exceptions.TokenError as e:
+                return Response({"detail": "Invalid Refresh token", "error": str(e)}, status=401)
+        else:
+            return Response({"detail": "Missing Refresh token"}, status=401)
 
-    # 3. They will be asked to login, so aside from hashing a password, there isn't really any JWT relevant
-    # work done here.
+class GoogleRegisterApi(APIView):
+    permission_classes = [AllowAny] 
+    class InputSerializer(serializers.Serializer):
+        credential = serializers.CharField() # Haven't actually made the model yet, this was just for testing purposes.
+ 
+    def post(self, request):
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    pass
+        token = serializer.validated_data["credential"]
+        
+        try:
+            # Class for handling the business logic of verifying the token?
+            userInfo = GoogleOIDC.verify_token(token=token)
+            sub = userInfo['sub']
+            user = get_user_by_oidc_sub(sub, "google")
 
-def login(request):
+            if user: # check if user exists in db already.
+                refresh_token_object = mint_http_tokens(user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_200_OK)
 
-    # Simple steps involved in logging in using JWT:
+                return response
 
-    # 1. User provides username and password
-    if request.method == "POST":
-        # pretend the login info matches
-        pass # I actually don't need to perform username/password checks here because authentication/token/ already uses TokenObtainPairView
-             # from rest_framework_simplejwt.views. It already handles serialization and checking username/password.
-             # I guess I need to remind myself that this is purely API and not a web server, so I don't need to worry about rendering templates as
-             # that is the frontend's job to render the correct page based on successful login or not.
+            else:
+                # register user to model then generate token
+                identity = GoogleOIDC.register_new_user(userInfo, "google")
+                refresh_token_object = mint_http_tokens(identity.user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_201_CREATED)
 
-    # 2. Information is checked against database
+                return response
+        except InvalidGoogleIdToken as e:
+            return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)
+        
+class GoogleLoginApi(APIView):
+    permission_classes = [AllowAny]
+    class InputSerializer(serializers.Serializer):
+        credential = serializers.CharField()
 
-    # 3. If valid, a JWT is provided to the user and optionally a refresh token (recommended)
+    def post(self, request):
+        serializer = self.InputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    pass
+        token = serializer.validated_data["credential"]
+
+        try:
+            userInfo = GoogleOIDC.verify_token(token=token)
+            sub = userInfo['sub']
+            user = get_user_by_oidc_sub(sub, "google")
+
+            if user: # check if user exists in db 
+                refresh_token_object = mint_http_tokens(user)
+                response = set_minted_cookie(refresh_token_object, status.HTTP_200_OK)
+
+                return response
+
+            else: # if None returned instead of user
+                return Response({"detail": "Unauthorized user, need to register."}, status=404)
+                # could maybe do a redirect to register route but I think its better to return 404 code and inform the user their account wasn't found in our database.
+
+        except InvalidGoogleIdToken as e: 
+            return Response({"detail": "Invalid ID token", "error": str(e)}, status=400)
+            
+
+        
