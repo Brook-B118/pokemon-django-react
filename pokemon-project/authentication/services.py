@@ -59,7 +59,7 @@ class GoogleOIDC:
         User = get_user_model()
         # for user we can name, i don't think we can do email.
         user = User.objects.create(
-            username=userInfo['email'], # change this to be something else, eventually users can edit this.
+            username=userInfo['email'], # eventually, let users edit this.
             email=userInfo['email'], # Include email in scope when requesting openId token from google.
         )
         user.set_unusable_password()
