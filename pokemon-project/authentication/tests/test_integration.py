@@ -23,7 +23,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
         # this runs before every test method
         User = get_user_model()
         self.user = User.objects.create(
-            username='test_user',
+            username='test@example.com',
             email='test@example.com',
         )
         self.user.set_unusable_password()
@@ -72,7 +72,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
         response = self.client.post(self.google_registration_route, {"credential": "fake_token"}, content_type="application/json")
 
         User = get_user_model()
-        new_user = User.objects.get(username='test_new_user')
+        new_user = User.objects.get(username='new_user_test@example.com')
         assert new_user.email == 'new_user_test@example.com'
 
         identity = OIDCIdentity.objects.get(sub='987654321')
