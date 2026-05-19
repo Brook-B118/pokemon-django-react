@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'authentication.apps.AuthConfig',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'caeds.apps.CardsConfig'
+    'cards.apps.CardsConfig'
 ]
 
 MIDDLEWARE = [
