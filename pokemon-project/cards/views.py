@@ -5,10 +5,12 @@ from rest_framework.permissions import AllowAny
 import requests
 from .services import get_cards
 from .serializers import CardSearchSerializer
+from .throttles import AnonCardSearchRateThrottle, UserCardSearchRateThrottle
 
 # Create your views here.
 class SearchCardsAPI(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AnonCardSearchRateThrottle, UserCardSearchRateThrottle]
 
     def get(self, request):
         serializer = CardSearchSerializer(data=request.query_params)
