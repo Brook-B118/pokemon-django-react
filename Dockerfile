@@ -4,6 +4,11 @@ WORKDIR /app
 
 COPY requirements.txt .
 
+# Install system packages
+RUN apt-get update && apt-get install -y \
+    redis-server curl && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["bash"]
