@@ -1,5 +1,7 @@
 import requests
 from django.core.cache import cache
+from .models import Favorite
+from django.db import transaction
 
 def get_cards(query_params):
     tcgdex_params = {}
@@ -48,3 +50,39 @@ def get_cards(query_params):
         pass  # Redis is down, response still returns fine
 
     return response.json()
+
+
+
+@transaction.atomic
+def add_favorite(user, card_data):
+    # card data is going to be a dictionary
+    # get_or_create returns (object, boolean), boolean is True if object was created (new) and False if it already existed (got)
+    # Tuple unpack to determine if resource created or resorce exists in view status code
+    # defaults is where we put fields that should only be set on creation
+    # fields outside of defaults are used for the lookup
+    _, created = Favorite.objects.get_or_create(
+    user=user,
+    card_id=card_data['card_id'],
+    defaults={
+        'card_name': card_data['card_name'],
+        'card_image': card_data.get('card_image', ''),
+        'card_rarity': card_data.get('card_rarity', ''),
+        'card_types': card_data.get('card_types', ''),
+        'card_set_id': card_data['card_set_id'],
+        'card_set_name': card_data['card_set_name']
+        }
+    )   
+    return created
+
+@transaction.atomic
+def delete_favorite(user, card_data):
+
+    favorite = Favorite.objects.filter(user=user, card_id=card_data['card_id']).first()
+
+    if favorite:
+        favorite.delete()
+        return True
+    else:
+        return False
+
+    
