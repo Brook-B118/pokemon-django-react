@@ -60,12 +60,15 @@ def add_favorite(user, card_data):
     # Tuple unpack to determine if resource created or resorce exists in view status code
     # defaults is where we put fields that should only be set on creation
     # fields outside of defaults are used for the lookup
+    raw_image = card_data.get('card_image', '')
+    card_image_quality = "high" # options: high (600x825) or low (245x337)
+    card_image_extension = "webp" # options: png, jpg, webp (recommended)
     _, created = Favorite.objects.get_or_create(
     user=user,
     card_id=card_data['card_id'],
     defaults={
         'card_name': card_data['card_name'],
-        'card_image': card_data.get('card_image', ''),
+        'card_image': f"{raw_image}/{card_image_quality}.{card_image_extension}" if raw_image else '',
         'card_rarity': card_data.get('card_rarity', ''),
         'card_types': card_data.get('card_types', ''),
         'card_set_id': card_data['card_set_id'],
