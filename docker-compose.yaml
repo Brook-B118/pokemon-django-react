@@ -6,13 +6,13 @@ services:
       - "5000:9000"
     volumes:
       - .:/app
-      - db_data:/app/pokemon-project/data/
     env_file:
       - pokemon-project/.env
     stdin_open: true
     tty: true
     depends_on:
       - redis
+      - db
     command: bash
 
   redis:
@@ -21,6 +21,16 @@ services:
     volumes:
       - redis_data:/data
 
+  db:
+    image: postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 volumes:
   db_data:
   redis_data:
+  postgres_data:
