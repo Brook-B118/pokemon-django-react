@@ -4,14 +4,6 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# Install system packages
-RUN apt-get update && apt-get install -y \
-    redis-server curl && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN echo "maxmemory 50mb" >> /etc/redis/redis.conf && \
-    echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 CMD ["bash"]
