@@ -25,7 +25,7 @@ def set_minted_cookie(refresh_token_object, return_status):
     
     return response
 
-class TokenRefresh(APIView):
+class TokenRefreshApi(APIView):
     permission_classes = [AllowAny]
     
     def post(self, request):

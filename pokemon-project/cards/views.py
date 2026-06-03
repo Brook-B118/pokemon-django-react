@@ -11,7 +11,7 @@ from .throttles import AnonCardSearchRateThrottle, UserCardSearchRateThrottle
 
 
 # Create your views here.
-class SearchCardsAPI(APIView):
+class CardSearchApi(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [AnonCardSearchRateThrottle, UserCardSearchRateThrottle]
 
@@ -49,7 +49,7 @@ class SearchCardsAPI(APIView):
             )
 
 
-class FavoriteCardsAPI(APIView):
+class CardFavoriteApi(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
