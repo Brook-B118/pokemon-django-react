@@ -14,7 +14,7 @@ from rest_framework_simplejwt import exceptions
 # Is mint_http_tokens called when the user already exists but registers and when a new user is registered?
 
 class GoogleRegistrationTests(TestCase):
-    google_registration_route = "/authentication/register/"
+    google_registration_route = "/api/authentication/register/"
 
 
     def test_missing_credential_key(self):
@@ -116,7 +116,7 @@ class GoogleRegistrationTests(TestCase):
 
 
 class GoogleLoginTests(TestCase):
-    google_login_route = "/authentication/login/"
+    google_login_route = "/api/authentication/login/"
 
     def test_missing_credential_key(self):
         response = self.client.post(self.google_login_route, {'': ''}, content_type="application/json")
@@ -183,7 +183,7 @@ class GoogleLoginTests(TestCase):
 
 
 class RefreshTokenTests(TestCase):
-    refresh_token_route = "/authentication/token/refresh/"
+    refresh_token_route = "/api/authentication/token/refresh/"
     # Missing refresh_str? 401 response
     # Valid refresh token object? 200 response with access token
     # Invalid refresh token? TokenError exception with 401 response

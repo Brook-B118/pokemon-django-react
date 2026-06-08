@@ -16,7 +16,7 @@ from rest_framework_simplejwt import exceptions
 # Does mint_http_tokens actually return valid tokens?
 
 class GoogleRegistrationIntegrationTests(TestCase):
-    google_registration_route = "/authentication/register/"
+    google_registration_route = "/api/authentication/register/"
 
 
     def setUp(self):
@@ -58,7 +58,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
         cookie = response.cookies['refresh_token']
         assert cookie['httponly'] == True
         assert cookie['samesite'] == 'Lax'
-        assert cookie['path'] == "/authentication/token/refresh/"
+        assert cookie['path'] == "/api/authentication/token/refresh/"
     
     # If a user doesn’t exist in the database when registering, does my view create a user in the database correctly and return a 201 response?
     @patch('authentication.services.GoogleOIDC.verify_token')
@@ -90,7 +90,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
         cookie = response.cookies['refresh_token']
         assert cookie['httponly'] == True
         assert cookie['samesite'] == 'Lax'
-        assert cookie['path'] == "/authentication/token/refresh/"
+        assert cookie['path'] == "/api/authentication/token/refresh/"
 
 
     # Does my get_user_by_oidc_sub correctly return a user object if they exist?
@@ -105,7 +105,7 @@ class GoogleRegistrationIntegrationTests(TestCase):
 
 
 class GoogleLoginIntegrationTests(TestCase):
-    google_login_route = "/authentication/login/"
+    google_login_route = "/api/authentication/login/"
 
     def setUp(self):
         # this runs before every test method
@@ -145,7 +145,7 @@ class GoogleLoginIntegrationTests(TestCase):
         cookie = response.cookies['refresh_token']
         assert cookie['httponly'] == True
         assert cookie['samesite'] == 'Lax'
-        assert cookie['path'] == "/authentication/token/refresh/"
+        assert cookie['path'] == "/api/authentication/token/refresh/"
 
     
     @patch('authentication.services.GoogleOIDC.verify_token')
@@ -162,7 +162,7 @@ class GoogleLoginIntegrationTests(TestCase):
         assert response.json()["detail"] == "Unauthorized user, need to register."
 
 class RefreshTokenIntegrationTests(TestCase):
-    refresh_token_route = "/authentication/token/refresh/"
+    refresh_token_route = "/api/authentication/token/refresh/"
 
 
     def setUp(self):
