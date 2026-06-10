@@ -47,3 +47,7 @@ secrets/
 tmp/
 temp/
 *.tmp
+
+# Python and Django
+__pycache__
+*.pyc
