@@ -28,8 +28,5 @@ local_settings.py
 # Logs
 *.log
 
-# dev container because it currently has some extensions for preference
-.devcontainer/
-
 secrets/
 *.json
