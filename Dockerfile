@@ -4,8 +4,8 @@ WORKDIR /app
 
 COPY pokemon-project/ .
 
-RUN groupadd -r appuser && \
-    useradd  -r -g appuser appuser &&\
+RUN groupadd appuser && \
+    useradd -m -g appuser appuser &&\
     chown -R appuser /app
 
 RUN pip install --no-cache-dir -r requirements.txt
