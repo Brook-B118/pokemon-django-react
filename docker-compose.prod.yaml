@@ -1,6 +1,9 @@
 services:
   web:
     build: . # placeholder until production image created
+    networks:
+      - public_net
+      - private_net
     env_file:
       - .env
     depends_on:
@@ -12,12 +15,16 @@ services:
 
   redis:
     image: redis:7.2-alpine@sha256:dfa18828cbc07b3ae6a95ec7343f6c214fdee2d836197b4be8e9904420762cd8
+    networks:
+      - private_net
     command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
 
   db:
     image: postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca
+    networks:
+      - private_net
     env_file:
       - .env
     volumes:
@@ -31,6 +38,8 @@ services:
 
   reverse_proxy:
     image: nginx:stable-alpine3.23@sha256:5f979dcfed4ce6461873f087e8c980d6e29b084b9e8776d9704a7e989b5f4898
+    networks:
+      - public_net
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     ports:
@@ -39,6 +48,13 @@ services:
     depends_on:
       web:
         condition: service_started # Switch to service_healthy when we learn how to check if gunicorn server is healthy
+
+networks:
+  public_net:
+    driver: bridge
+  private_net:
+    driver: bridge
+    internal: true
 
 volumes:
   redis_data:
