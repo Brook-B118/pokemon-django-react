@@ -5,6 +5,7 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
+Environment="PATH=/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin"
 ExecStart=/home/ubuntu/pokemon-tcg-app/startup.sh
 RemainAfterExit=yes
 
