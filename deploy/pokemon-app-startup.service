@@ -1,0 +1,12 @@
+[Unit]
+Description=Pokemon TCG app (Fetch secrets and start Docker Compose Stack)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/pokemon-tcg-app/startup.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

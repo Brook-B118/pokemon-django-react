@@ -2,9 +2,15 @@ FROM python:3.12-bookworm@sha256:a3dd99f0012a21776ef49aa3698aed044be9c8404dc6c89
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY pokemon-project/ .
+
+RUN groupadd appuser && \
+    useradd -m -g appuser appuser &&\
+    chown -R appuser /app
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["bash"]
+USER appuser:appuser
+
+CMD ["gunicorn", "--worker-tmp-dir", "/dev/shm", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
 
