@@ -11,4 +11,4 @@ while read -r line; do
   echo "$line" | jq -r '"\(.key)=\(.value)"' >> .env
 done <<< "$STRING"
 
-docker compose up -f docker-compose.prod.yaml up -d
+docker compose -f docker-compose.prod.yaml up -d
