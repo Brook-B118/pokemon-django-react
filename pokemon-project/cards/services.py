@@ -52,27 +52,58 @@ def get_cards(query_params):
     return response.json()
 
 
+def get_full_card_details(card_id):
+
+    query_string = card_id
+
+    cache_key = f"cards:{query_string}"
+
+    try:
+        cached_results = cache.get(cache_key)
+        if cached_results is not None:
+            return cached_results
+    except Exception:
+        pass  # potential redis server issue? Fall through to TCGdex
+
+    response = requests.get(
+        f"https://api.tcgdex.net/v2/en/cards/{query_string}",
+        timeout=10
+    )
+    
+    response.raise_for_status()
+
+    try:
+        cache.set(cache_key, response.json(), timeout=86400) # Redis SET is extremeley fast, don't need to make this async.
+    except Exception:
+        pass  # Redis is down, response still returns fine
+
+    return response.json()
+
 
 @transaction.atomic
-def add_favorite(user, card_data):
+def add_favorite(user, card_id):
     # card data is going to be a dictionary
     # get_or_create returns (object, boolean), boolean is True if object was created (new) and False if it already existed (got)
     # Tuple unpack to determine if resource created or resorce exists in view status code
     # defaults is where we put fields that should only be set on creation
     # fields outside of defaults are used for the lookup
-    raw_image = card_data.get('card_image', '')
+
+    full_card_data = get_full_card_details(card_id)
+
+    raw_image = full_card_data.get('image', '')
     card_image_quality = "high" # options: high (600x825) or low (245x337)
     card_image_extension = "webp" # options: png, jpg, webp (recommended)
+
     _, created = Favorite.objects.get_or_create(
     user=user,
-    card_id=card_data['card_id'],
+    card_id=full_card_data.get('id', ''),
     defaults={
-        'card_name': card_data['card_name'],
+        'card_name': full_card_data.get('name', ''),
         'card_image': f"{raw_image}/{card_image_quality}.{card_image_extension}" if raw_image else '',
-        'card_rarity': card_data.get('card_rarity', ''),
-        'card_types': card_data.get('card_types', ''),
-        'card_set_id': card_data['card_set_id'],
-        'card_set_name': card_data['card_set_name']
+        'card_rarity': full_card_data.get('rarity', ''),
+        'card_types': full_card_data.get('types', ''),
+        'card_set_id': full_card_data.get('set', {}).get('id', ''),
+        'card_set_name': full_card_data.get('set', {}).get('name', '')
         }
     )   
     return created

@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework import serializers, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt import exceptions
+from drf_spectacular.utils import extend_schema
+
 
 def set_minted_cookie(refresh_token_object, return_status):
     response = Response(
@@ -56,6 +58,10 @@ class GoogleRegisterApi(APIView):
     permission_classes = [AllowAny] 
     class InputSerializer(serializers.Serializer):
         credential = serializers.CharField() # Haven't actually made the model yet, this was just for testing purposes.
+
+    @extend_schema(
+        request=InputSerializer,
+    )
  
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
@@ -89,6 +95,10 @@ class GoogleLoginApi(APIView):
     permission_classes = [AllowAny]
     class InputSerializer(serializers.Serializer):
         credential = serializers.CharField()
+
+    @extend_schema(
+        request=InputSerializer,
+    )
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)

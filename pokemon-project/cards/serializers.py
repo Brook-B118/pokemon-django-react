@@ -11,12 +11,6 @@ class CardSearchSerializer(serializers.Serializer):
 
 class FavoriteCardSerializer(serializers.Serializer):
     card_id = serializers.CharField(required=True, max_length=64)
-    card_name = serializers.CharField(required=True, max_length=128)
-    card_image = serializers.CharField(required=False, max_length=256)
-    card_rarity = serializers.CharField(required=False, max_length=64)
-    card_types = serializers.CharField(required=False, max_length=128)
-    card_set_id = serializers.CharField(required=True, max_length=64)
-    card_set_name = serializers.CharField(required=True, max_length=128)
 
 
 class FavoriteCardDeleteSerializer(serializers.Serializer):

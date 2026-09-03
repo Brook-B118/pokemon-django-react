@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'authentication.apps.AuthConfig',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
-    'cards.apps.CardsConfig'
+    'cards.apps.CardsConfig',
+    'drf_spectacular'
 ]
 
 MIDDLEWARE = [
@@ -76,7 +77,16 @@ REST_FRAMEWORK = {
         'user': '1000/day',
         'anon_search_cards': '30/min',
         'user_search_cards': '60/min'
-    }
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Pokemon TCG Project API',
+    'DESCRIPTION': 'This is the backend for my pokemon project using Django.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # OTHER SETTINGS
 }
 
 SIMPLE_JWT = {
