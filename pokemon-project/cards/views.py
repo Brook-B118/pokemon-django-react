@@ -8,12 +8,17 @@ from .services import get_cards, add_favorite, delete_favorite
 from .selectors import get_user_favorites, get_favorited_card_ids
 from .serializers import CardSearchSerializer, FavoriteCardSerializer, FavoriteCardDeleteSerializer
 from .throttles import AnonCardSearchRateThrottle, UserCardSearchRateThrottle
+from drf_spectacular.utils import extend_schema
 
 
 # Create your views here.
 class CardSearchApi(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [AnonCardSearchRateThrottle, UserCardSearchRateThrottle]
+
+    @extend_schema(
+        parameters=[CardSearchSerializer],
+    )
 
     def get(self, request):
         serializer = CardSearchSerializer(data=request.query_params)
@@ -56,23 +61,31 @@ class CardFavoriteApi(APIView):
         # User opens their favorites tab
         favorites = get_user_favorites(user=request.user)
         return Response(favorites)
-       
 
+
+    @extend_schema(
+        request=FavoriteCardSerializer,
+    )       
 
     def post(self, request):
         serializer = FavoriteCardSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
-            created = add_favorite(user=request.user, data=serializer.validated_data)
+            created = add_favorite(user=request.user, card_id=serializer.validated_data['card_id'])
 
             status_code = 201 if created else 200
 
             return Response({"message": "Card favorited successfully"}, status=status_code)
         
         except Exception:
+  
             return Response({"error": "Unable to favorite card"}, status=500)
 
+
+    @extend_schema(
+        parameters=[FavoriteCardDeleteSerializer],
+    ) 
 
     def delete(self, request):
         serializer = FavoriteCardDeleteSerializer(data=request.data)
