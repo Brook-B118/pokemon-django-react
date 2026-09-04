@@ -7,7 +7,7 @@ import requests
 from .services import get_cards, add_favorite, delete_favorite
 from .selectors import get_user_favorites, get_favorited_card_ids
 from .serializers import CardSearchSerializer, FavoriteCardSerializer, FavoriteCardDeleteSerializer
-from .throttles import AnonCardSearchRateThrottle, UserCardSearchRateThrottle
+from .throttles import AnonCardSearchRateThrottle, UserCardSearchRateThrottle, UserCardFavoriteRateThrottle
 from drf_spectacular.utils import extend_schema
 
 
@@ -56,6 +56,7 @@ class CardSearchApi(APIView):
 
 class CardFavoriteApi(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [UserCardFavoriteRateThrottle]
 
     def get(self, request):
         # User opens their favorites tab

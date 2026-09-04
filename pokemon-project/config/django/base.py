@@ -76,7 +76,8 @@ REST_FRAMEWORK = {
         'anon': '100/day',
         'user': '1000/day',
         'anon_search_cards': '30/min',
-        'user_search_cards': '60/min'
+        'user_search_cards': '60/min',
+        'user_favorite_card': '30/min',
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
 }

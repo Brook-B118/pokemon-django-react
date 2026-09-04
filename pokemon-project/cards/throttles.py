@@ -6,3 +6,7 @@ class AnonCardSearchRateThrottle(AnonRateThrottle):
 
 class UserCardSearchRateThrottle(UserRateThrottle):
     scope = 'user_search_cards'
+
+
+class UserCardFavoriteRateThrottle(UserRateThrottle):
+    scope = 'user_favorite_card'
