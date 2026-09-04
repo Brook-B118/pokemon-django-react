@@ -17,15 +17,21 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from config.env import env
 
+DJANGO_DEBUG = env.bool('DJANGO_DEBUG')
 
 urlpatterns = [
     path('admin/', admin.site.urls), # localhost:8000/admin/
     path('api/authentication/', include('authentication.urls')), # localhost:8000/authentication/
-    path('api/cards/', include('cards.urls')),
-    # My Patterns
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    # Optional UI:
-    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('api/cards/', include('cards.urls')),  
 ]
+
+if DJANGO_DEBUG:
+    urlpatterns += [
+        # My Patterns
+            path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+            # Optional UI:
+            path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+            path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    ]
