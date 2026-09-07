@@ -14,6 +14,8 @@ from datetime import timedelta
 from pathlib import Path
 import os
 from config.env import BASE_DIR, env
+import logging
+import sys
 
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
@@ -110,6 +112,23 @@ CACHES = {
 }
 
 ROOT_URLCONF = 'config.urls'
+
+LOGGING = {
+    'version': 1,
+    'handlers': {
+        'console': {
+            'class': logging.StreamHandler,
+            'stream': sys.stdout,
+        },
+    },
+    'loggers': {
+        'django.request': { 
+            'level': 'ERROR',
+            'handlers': ['console'],
+            'propagate': False,
+        }
+    }
+}
 
 TEMPLATES = [
     {
