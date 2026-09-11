@@ -6,3 +6,5 @@ DEBUG = env.bool('DJANGO_DEBUG', default=False)
 
 # Allow any host in dev mode
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
