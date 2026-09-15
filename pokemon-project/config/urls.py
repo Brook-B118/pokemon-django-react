@@ -22,7 +22,7 @@ from config.env import env
 DJANGO_DEBUG = env.bool('DJANGO_DEBUG')
 
 urlpatterns = [
-    path('admin/', admin.site.urls), # localhost:8000/admin/
+    # path('admin/', admin.site.urls), # localhost:8000/admin/
     path('api/authentication/', include('authentication.urls')), # localhost:8000/authentication/
     path('api/cards/', include('cards.urls')),  
 ]
