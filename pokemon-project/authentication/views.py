@@ -20,8 +20,8 @@ def set_minted_cookie(refresh_token_object, return_status):
             key="refresh_token",
             value=str(refresh_token_object),
             httponly=True,
-            secure=False,      # True in prod (HTTPS). In local dev you may need False.
-            samesite="Lax",   # Often OK for same-site SPA. "None" requires secure=True.
+            secure=True,      # True in prod (HTTPS). In local dev you may need False.
+            samesite="Strict",   # Often OK for same-site SPA. "None" requires secure=True.
             path="/api/authentication/token/refresh/",  # optional but nice
         )
     
