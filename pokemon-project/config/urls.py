@@ -19,7 +19,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 from config.env import env
 
-DJANGO_DEBUG = env.bool('DJANGO_DEBUG')
+ENABLE_SWAGGER_DOCS = env.bool('ENABLE_SWAGGER_DOCS', False)
 
 urlpatterns = [
     # path('admin/', admin.site.urls), # localhost:8000/admin/
@@ -27,7 +27,7 @@ urlpatterns = [
     path('api/cards/', include('cards.urls')),  
 ]
 
-if DJANGO_DEBUG:
+if ENABLE_SWAGGER_DOCS:
     urlpatterns += [
         # My Patterns
             path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
