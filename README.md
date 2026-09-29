@@ -126,7 +126,7 @@ _(Card search/favorites test coverage is intentionally not yet written. When my 
 
 **Step 2:** Create a file for environment variables called `.env.dev` with the following variables:
 
-\```
+```
 DJANGO_SETTINGS_MODULE='config.django.local'
 DJANGO_DEBUG=True
 SECRET_KEY=put_whatever_you_want_here
@@ -140,25 +140,25 @@ DATABASE_URL=postgres://<your_database_username_here>:<your_database_password_he
 ALLOWED_HOSTS=localhost,127.0.0.1
 
 ENABLE_SWAGGER_DOCS=True
-\```
+```
 
 **Step 3:** Open the codebase in a dev container
 
 **Step 4:** Make migrations
 
-\```bash
+```bash
 cd pokemon-project
 python3 manage.py makemigrations
 python3 manage.py migrate
-\```
+```
 
 ### Running the application
 
 Inside the dev container, make sure your current directory is `pokemon-project/` and run:
 
-\```bash
+```bash
 python3 manage.py runserver
-\```
+```
 
 Then visit `http://127.0.0.1:8000/`.
 
@@ -168,23 +168,23 @@ Inside the dev container, make sure your current directory is `pokemon-project/`
 
 Run all tests in the application:
 
-\```bash
+```bash
 python3 manage.py test
-\```
+```
 
 > **Note:** Running tests automatically sets the `CACHE` setting to use local memory instead of Redis.
 
 You can scope which tests run like so:
 
-\```bash
+```bash
 python3 manage.py test <app_name>.<test_folder_name>.<test_file_name>.<test_class_name>.<test_method_name>
-\```
+```
 
 **Example:**
 
-\```bash
+```bash
 python3 manage.py test authentication.tests.test_unit
-\```
+```
 
 This runs all tests inside the `authentication/tests/test_unit.py` file.
 
@@ -242,3 +242,7 @@ Click **Create** and save the client JSON file somewhere secure.
 - [ ] CI/CD pipeline (GitHub Actions)
 - [ ] React frontend
 - [ ] PKCE flow (deferred until the frontend exists)
+
+```
+
+```
