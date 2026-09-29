@@ -120,8 +120,6 @@ _(Card search/favorites test coverage is intentionally not yet written. When my 
 
 ---
 
-## Local development
-
 ## Local Development
 
 **Step 1:** Clone the repo
