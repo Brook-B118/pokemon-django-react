@@ -1,6 +1,6 @@
 {
   "name": "Pokemon Django Dev",
-  "dockerComposeFile": "../docker-compose.yaml",
+  "dockerComposeFile": "../docker-compose.dev.yaml",
   "service": "web",
   "workspaceFolder": "/app",
   "remoteUser": "root",

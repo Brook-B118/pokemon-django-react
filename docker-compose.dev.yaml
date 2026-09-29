@@ -7,7 +7,7 @@ services:
     volumes:
       - .:/app
     env_file:
-      - pokemon-project/.env
+      - .env.dev
     stdin_open: true
     tty: true
     depends_on:
