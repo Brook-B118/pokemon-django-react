@@ -116,7 +116,7 @@ The authentication app has 20+ unit and integration tests, covering registration
 python3 manage.py test
 ```
 
-_(Card search/favorites test coverage is intentionally not yet written. When my brother finishes his CS50 course, I hope to be a software engineer by that time. I plan to give him a junior developer experience through this project and one of those tasks will be writing tests for the card app.)_
+_(Card search/favorites test coverage is intentionally not yet written. When my brother finishes his CS50 course, I plan to give him a junior developer experience through this project and one of those tasks will be writing tests for the card app.)_
 
 ---
 
